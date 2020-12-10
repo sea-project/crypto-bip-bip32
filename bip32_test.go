@@ -1,8 +1,10 @@
 package bip32
 
 import (
+	addr "github.com/sea-project/crypto-address-p2pkh"
 	ecc "github.com/sea-project/crypto-ecc-s256"
 	ecdsa "github.com/sea-project/crypto-signature-ecdsa"
+	bytes "github.com/sea-project/stdlib-bytes"
 	"testing"
 )
 
@@ -11,7 +13,9 @@ type test struct {
 }
 
 func Test_Main(t *testing.T) {
-	mkey, err := NewMasterKey([]byte("qiqi"))
+	hexPrv := "962a3216577de604a0a44086e78960263131b05b92f5ccd3b1d494acf05d3057"
+	prvB, _ := bytes.Hex2Bytes(hexPrv)
+	mkey, err := NewMasterKey(prvB)
 	if err != nil {
 		t.Log(err)
 	}
@@ -20,6 +24,13 @@ func Test_Main(t *testing.T) {
 	t.Log(mkey.PublicKey())
 	t.Log(PubKeyToAddr(mkey.PublicKey().Key))
 
+	ck, err := mkey.DeriveFromKeyPath("m/44'/0'/0'/0/1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	eckey, _ := ecdsa.ToECDSA(ck.Key, true)
+	btcAddr := addr.ToBTCAddress(eckey.ToPubKey())
+	t.Log(btcAddr)
 }
 
 func Test_NewKeyFromMasterKey(t *testing.T) {
@@ -50,7 +61,7 @@ func Test_NewKeyFromMasterKey(t *testing.T) {
 }
 
 func Test_CheckKeyPath(t *testing.T) {
-	index_arr, err := CheckKeyPath("m/44'/60'/0'/0/1")
+	index_arr, err := CheckKeyPath("m/44'/60'/0'/2147483648/2")
 	t.Log(err)
 	t.Log(index_arr)
 }
